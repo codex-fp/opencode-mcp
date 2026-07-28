@@ -124,6 +124,11 @@ export class OpenCodeClient {
           // scoping for every tool that passes a `directory`.
           headers["x-opencode-directory"] = normalized;
         }
+        if (opts?.body !== undefined && ["POST", "PATCH", "PUT"].includes(method.toUpperCase())) {
+          // The generated SDK methods set this, but the generic transport used
+          // here must do it explicitly so OpenCode parses the JSON request body.
+          headers["Content-Type"] = "application/json";
+        }
 
         const apiClient = (this.api as any)._client;
         const controller = opts?.timeout ? new AbortController() : undefined;

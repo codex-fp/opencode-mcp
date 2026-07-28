@@ -244,6 +244,46 @@ describe("x-opencode-directory header", () => {
   });
 });
 
+// ─── JSON request body headers ───────────────────────────────────────────
+
+describe("JSON request body headers", () => {
+  it("marks prompt bodies as application/json", async () => {
+    const client = new OpenCodeClient({ baseUrl: "http://localhost:4096" });
+    const calls: Array<{ url: string; body: unknown; headers: Record<string, string> }> = [];
+
+    (client.api as unknown as { _client: unknown })._client = {
+      post: async (opts: { url: string; body: unknown; headers: Record<string, string> }) => {
+        calls.push(opts);
+        return { data: {}, error: undefined, response: { status: 200 } };
+      },
+    };
+
+    await client.post("/session/ses_test/message", {
+      parts: [{ type: "text", text: "test" }],
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("does not add a JSON content type when no body is sent", async () => {
+    const client = new OpenCodeClient({ baseUrl: "http://localhost:4096" });
+    const calls: Array<{ headers: Record<string, string> }> = [];
+
+    (client.api as unknown as { _client: unknown })._client = {
+      post: async (opts: { headers: Record<string, string> }) => {
+        calls.push(opts);
+        return { data: {}, error: undefined, response: { status: 200 } };
+      },
+    };
+
+    await client.post("/session/ses_test/abort");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].headers["Content-Type"]).toBeUndefined();
+  });
+});
+
 // ─── Reconnect path: URL rebinding + reconnectAttempts reset ─────────────
 
 describe("reconnect path", () => {
